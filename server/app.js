@@ -15,14 +15,24 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use((req, res, next) => {
-  console.log(req.method, req.url);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(req.method, req.url);
+//   next();
+// });
 app.use(parseCookies);
 app.use(Auth.createSession);
 app.use(Auth.verifySession);
+app.use(Auth.redirect);
 
+app.get('/login', 
+(req, res) => {
+  res.render('login');
+});
+
+app.get('/signup', 
+(req, res) => {
+  res.render('signup');
+});
 
 app.get('/', 
 (req, res) => {

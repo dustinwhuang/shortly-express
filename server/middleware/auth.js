@@ -41,19 +41,27 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-module.exports.assignSession = (username) => {
-  
+module.exports.redirect = (req, res, next) => {
+  if (req.url !== '/' && req.url !== '/create' && req.url !== '/links') {
+    return next();
+  }
+  if (!models.Sessions.isLoggedIn(req.session)) {
+    res.redirect('/login');
+  } else {
+    next();
+  }
 };
 
 module.exports.verifySession = (req, res, next) => {
-  let username = (req.body && req.body.username) || (req.session.user && req.session.user.username);
+  let username = (req.body && req.body.username);
+
   return models.Users.get({username: username})
     .then(result => {
-console.log(result);
       if (result) {
         if (models.Users.compare(req.body.password, result.password, result.salt)) {
           models.Sessions.update({hash: req.session.hash}, {userId: result.id})
             .then(() => next());
+          req.session.user = {username: username};
         } else {
           next();
         }
