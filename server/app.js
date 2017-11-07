@@ -5,6 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
+const parseCookies = require('./middleware/cookieParser');
 
 const app = express();
 
@@ -14,7 +15,13 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-
+app.use((req, res, next) => {
+  console.log(req.method, req.url);
+  next();
+});
+app.use(parseCookies);
+app.use(Auth.createSession);
+app.use(Auth.verifySession);
 
 
 app.get('/', 
@@ -78,7 +85,47 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+app.post('/signup', (req, res, next) => {
+  models.Users.get({username: req.body.username})
+  .then(result => {
+    if (result) {
+      res.redirect('/signup');
+    } else {
+      models.Users.create(req.body)
+        .then(() => {
+          Auth.verifySession(req, res, next)
+            .then(() => res.redirect('/'));
+        })
+        .catch(err => console.log(err));
+    }
+  });
+});
 
+app.post('/login', (req, res, next) => {
+  models.Users.get({username: req.body.username})
+  .then(result => {
+    if (result) {
+      if (models.Users.compare(req.body.password, result.password, result.salt)) {
+        res.redirect('/');
+        return;
+      }
+    }
+    res.redirect('/login');
+  });  
+});
+
+app.get('/logout', (req, res, next) => {
+  models.Users.get({username: req.session.user.username})
+  .then(result => {
+    if (result) {
+      models.Sessions.delete({userId: result.id})
+        .then(() => {
+          res.clearCookie('shortlyid');
+          res.redirect('/login');
+        });
+    }
+  });  
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
