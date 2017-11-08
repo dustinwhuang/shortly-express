@@ -14,6 +14,7 @@ window.Shortly = Backbone.View.extend({
     this.router.on('route', this.updateNav, this);
 
     Backbone.history.start({ pushState: true });
+    // this.router.navigate('/login', { trigger: true });
   },
 
   render: function() {

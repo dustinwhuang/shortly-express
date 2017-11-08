@@ -21,7 +21,7 @@ module.exports.createSession = (req, res, next) => {
   if (!_.isEmpty(cookies)) {
     models.Sessions.get({hash: req.cookies.shortlyid})
       .then(({hash, userId}) => {
-        req.session = {hash: hash, user: {}, userId: userId};
+        req.session = {hash: hash, user: undefined, userId: userId};
         models.Users.get({id: userId})
           .then(({username}) => {
             req.session.user = {username: username};
@@ -45,6 +45,7 @@ module.exports.redirect = (req, res, next) => {
   if (req.url !== '/' && req.url !== '/create' && req.url !== '/links') {
     return next();
   }
+
   if (!models.Sessions.isLoggedIn(req.session)) {
     res.redirect('/login');
   } else {

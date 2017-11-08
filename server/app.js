@@ -26,12 +26,12 @@ app.use(Auth.redirect);
 
 app.get('/login', 
 (req, res) => {
-  res.render('login');
+  res.render('index');
 });
 
 app.get('/signup', 
 (req, res) => {
-  res.render('signup');
+  res.render('index');
 });
 
 app.get('/', 
@@ -96,36 +96,37 @@ app.post('/links',
 /************************************************************/
 
 app.post('/signup', (req, res, next) => {
-  models.Users.get({username: req.body.username})
+  return models.Users.get({username: req.body.username})
   .then(result => {
     if (result) {
-      res.redirect('/signup');
+      res.sendStatus(500);
     } else {
-      models.Users.create(req.body)
+      return models.Users.create(req.body)
         .then(() => {
           Auth.verifySession(req, res, next)
-            .then(() => res.redirect('/'));
-        })
-        .catch(err => console.log(err));
+            .then(() => res.sendStatus(200));
+        });
     }
   });
 });
 
 app.post('/login', (req, res, next) => {
-  models.Users.get({username: req.body.username})
+  return models.Users.get({username: req.body.username})
   .then(result => {
     if (result) {
       if (models.Users.compare(req.body.password, result.password, result.salt)) {
         res.redirect('/');
-        return;
+      } else {
+        res.sendStatus(401);
       }
+    } else {
+      res.sendStatus(401);
     }
-    res.redirect('/login');
   });  
 });
 
 app.get('/logout', (req, res, next) => {
-  models.Users.get({username: req.session.user.username})
+  req.session.user && models.Users.get({username: req.session.user.username})
   .then(result => {
     if (result) {
       models.Sessions.delete({userId: result.id})
@@ -134,7 +135,7 @@ app.get('/logout', (req, res, next) => {
           res.redirect('/login');
         });
     }
-  });  
+  });
 });
 
 /************************************************************/

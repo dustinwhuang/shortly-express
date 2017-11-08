@@ -1,13 +1,17 @@
 Shortly.LinksView = Backbone.View.extend({
   className: 'links',
+  template: Templates['header'],
+
 
   initialize: function() {
     this.collection.on('sync', this.addAll, this);
     this.collection.fetch();
+
   },
 
   render: function() {
     this.$el.empty();
+    this.$el.html( this.template() );
     return this;
   },
 
